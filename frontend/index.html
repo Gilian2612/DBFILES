@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor Documental</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f4f6f9; color: #1a1a2e; }
+
+    header { background: #1a1a2e; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.2rem; }
+    #user-info { font-size: 0.85rem; opacity: 0.8; }
+
+    /* Login */
+    #login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .login-box { background: white; padding: 2rem; border-radius: 8px; width: 360px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    .login-box h2 { margin-bottom: 1.5rem; font-size: 1.3rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #555; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; }
+    .btn { padding: 9px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    .btn-primary { background: #1a1a2e; color: white; width: 100%; margin-top: 0.5rem; }
+    .btn-primary:hover { background: #2d2d4e; }
+    .error { color: #c0392b; font-size: 0.83rem; margin-top: 0.5rem; }
+
+    /* App */
+    #app-screen { display: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+    .search-bar { display: flex; gap: 10px; flex-wrap: wrap; background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .search-bar input, .search-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+    .search-bar input[type=text] { flex: 1; min-width: 200px; }
+    .btn-search { background: #2563eb; color: white; }
+    .btn-search:hover { background: #1d4ed8; }
+
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.85rem; color: #666; }
+    .btn-upload { background: #16a34a; color: white; font-size: 0.85rem; padding: 7px 14px; }
+
+    table { width: 100%; background: white; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    thead { background: #f8fafc; }
+    th, td { padding: 10px 14px; text-align: left; font-size: 0.875rem; border-bottom: 1px solid #f0f0f0; }
+    th { font-weight: 500; color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    tr:hover td { background: #f8fafc; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 500; }
+    .badge-pdf   { background: #fee2e2; color: #b91c1c; }
+    .badge-docx  { background: #dbeafe; color: #1d4ed8; }
+    .badge-xlsx  { background: #dcfce7; color: #15803d; }
+    .badge-pptx  { background: #fef3c7; color: #b45309; }
+    .badge-otro  { background: #f3f4f6; color: #374151; }
+
+    .pagination { display: flex; gap: 6px; margin-top: 1rem; justify-content: center; }
+    .pagination button { padding: 5px 12px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem; }
+    .pagination button.active { background: #2563eb; color: white; border-color: #2563eb; }
+
+    /* Upload modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 8px; padding: 1.5rem; width: 420px; }
+    .modal h3 { margin-bottom: 1rem; }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+    .btn-cancel { background: #f3f4f6; color: #374151; }
+    #upload-status { font-size: 0.83rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h2>Gestor Documental</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="admin@gestor.local">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Ingresar</button>
+    <div class="error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <header>
+    <h1>Gestor Documental</h1>
+    <div id="user-info"></div>
+  </header>
+
+  <div class="container">
+    <div class="search-bar">
+      <input type="text" id="q" placeholder="Buscar en contenido de documentos...">
+      <select id="tipo">
+        <option value="">Todos los tipos</option>
+        <option value="pdf">PDF</option>
+        <option value="docx">Word</option>
+        <option value="xlsx">Excel</option>
+        <option value="pptx">PowerPoint</option>
+      </select>
+      <select id="area"></select>
+      <input type="date" id="desde" title="Desde">
+      <input type="date" id="hasta" title="Hasta">
+      <button class="btn btn-search" onclick="buscar(1)">Buscar</button>
+    </div>
+
+    <div class="results-header">
+      <span id="total-label">—</span>
+      <button class="btn btn-upload" onclick="abrirModal()">+ Subir archivo</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th><th>Tipo</th><th>Área</th><th>Fecha subida</th><th>Tamaño</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-docs"></tbody>
+    </table>
+
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+
+<!-- MODAL SUBIDA -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Subir documento</h3>
+    <div class="form-group">
+      <label>Archivo</label>
+      <input type="file" id="file-input" accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt">
+    </div>
+    <div class="form-group">
+      <label>Área</label>
+      <select id="upload-area"></select>
+    </div>
+    <div class="form-group">
+      <label>Fecha del documento</label>
+      <input type="date" id="upload-fecha">
+    </div>
+    <div id="upload-status"></div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="subirArchivo()">Subir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "http://localhost:8000";
+let token = null;
+let paginaActual = 1;
+
+async function doLogin() {
+  const email = document.getElementById("login-email").value;
+  const pass  = document.getElementById("login-pass").value;
+  const form  = new URLSearchParams({ username: email, password: pass });
+
+  const res = await fetch(`${API}/auth/login`, { method: "POST", body: form });
+  if (!res.ok) { document.getElementById("login-error").textContent = "Credenciales incorrectas"; return; }
+
+  const data = await res.json();
+  token = data.access_token;
+  document.getElementById("user-info").textContent = `${data.usuario.nombre} (${data.usuario.rol})`;
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "block";
+  cargarAreas();
+  buscar(1);
+}
+
+async function cargarAreas() {
+  const res = await fetch(`${API}/areas/`, { headers: { Authorization: `Bearer ${token}` } });
+  const areas = await res.json();
+  const selects = ["area", "upload-area"];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">Todas las áreas</option>';
+    areas.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.nombre}</option>`);
+  });
+}
+
+async function buscar(pagina) {
+  paginaActual = pagina;
+  const q       = document.getElementById("q").value;
+  const tipo    = document.getElementById("tipo").value;
+  const area_id = document.getElementById("area").value;
+  const desde   = document.getElementById("desde").value;
+  const hasta   = document.getElementById("hasta").value;
+
+  const params = new URLSearchParams({ pagina, limite: 20 });
+  if (q)       params.append("q", q);
+  if (tipo)    params.append("tipo", tipo);
+  if (area_id) params.append("area_id", area_id);
+  if (desde)   params.append("desde", desde);
+  if (hasta)   params.append("hasta", hasta);
+
+  const res  = await fetch(`${API}/documentos/?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+
+  document.getElementById("total-label").textContent = `${data.total} documento(s) encontrado(s)`;
+
+  const tbody = document.getElementById("tabla-docs");
+  tbody.innerHTML = data.datos.map(d => `
+    <tr>
+      <td>${d.nombre}</td>
+      <td><span class="badge badge-${d.tipo}">${d.tipo.toUpperCase()}</span></td>
+      <td>${d.area || '—'}</td>
+      <td>${new Date(d.fecha_subida).toLocaleDateString("es-CO")}</td>
+      <td>${d.tamanio_bytes ? (d.tamanio_bytes/1024).toFixed(1) + ' KB' : '—'}</td>
+    </tr>
+  `).join("");
+
+  const pag = document.getElementById("paginacion");
+  pag.innerHTML = "";
+  for (let i = 1; i <= data.paginas; i++) {
+    pag.innerHTML += `<button class="${i===pagina?'active':''}" onclick="buscar(${i})">${i}</button>`;
+  }
+}
+
+async function subirArchivo() {
+  const file    = document.getElementById("file-input").files[0];
+  const area_id = document.getElementById("upload-area").value;
+  const fecha   = document.getElementById("upload-fecha").value;
+  const status  = document.getElementById("upload-status");
+
+  if (!file) { status.textContent = "Selecciona un archivo."; return; }
+
+  const form = new FormData();
+  form.append("file", file);
+  if (area_id) form.append("area_id", area_id);
+  if (fecha)   form.append("fecha_documento", fecha);
+
+  status.textContent = "Subiendo...";
+  const res = await fetch(`${API}/documentos/`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+
+  if (res.ok) {
+    status.textContent = "¡Archivo subido correctamente!";
+    setTimeout(() => { cerrarModal(); buscar(1); }, 1000);
+  } else {
+    const err = await res.json();
+    status.textContent = `Error: ${err.detail}`;
+  }
+}
+
+function abrirModal()  { document.getElementById("modal").classList.add("open"); }
+function cerrarModal() { document.getElementById("modal").classList.remove("open"); document.getElementById("upload-status").textContent = ""; }
+</script>
+</body>
+</html>
