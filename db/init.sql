@@ -74,6 +74,6 @@ ON CONFLICT DO NOTHING;
 INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (
     'Administrador',
     'admin@gestor.local',
-    '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW',
+    '$2b$12$nYcsRqXsnWhlxz9hS2vOHexcmPJKmaaLDnVKxX9kg3ztiZ3Zp0yMm',
     'admin'
 ) ON CONFLICT DO NOTHING;
