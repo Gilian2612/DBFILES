@@ -38,9 +38,19 @@ OR IN ANY DEVICE CONNECTED TO THE SAME WIFI NETWORK AS THE HOST:
  You can find your host ip inside the host terminal with 
 
  MacOS/linux: ifconfig 
- 
+
  Windows: ipconfig 
 
+4. login: 
+
+predetermined admin role 
+- Email: admin@gestor.local
+
+- PASSWORD: Admin1234 
+
+![alt text](image-3.png)
+
+Password can be changed in 
 
 
  
