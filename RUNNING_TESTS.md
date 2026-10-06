@@ -50,7 +50,16 @@ predetermined admin role
 
 ![alt text](image-3.png)
 
-Password can be changed in 
+Password can be changed in terminal by 
+
+./cambiar-admin.command
+
+or inside the folder clicking the cambiar-admin.command file 
+
+
+5. Inside the UI: 
+
+![alt text](image-4.png)
 
 
  

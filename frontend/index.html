@@ -283,6 +283,7 @@ let token = null;
 let usuarioActual = null;
 let paginaActual = 1;
 let lang = "es";
+let areasCache = [];
 
 // ── Traducciones ─────────────────────────────────────────────────────────────
 
@@ -464,13 +465,7 @@ function applyLang() {
     document.getElementById("user-info-btn").textContent = `${usuarioActual.nombre} (${rol}) ▾`;
     document.getElementById("user-info-btn").title = t("userInfoTitle");
   }
-  // Actualizar primera opción de los selects de área
-  ["area", "upload-area"].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel && sel.options[0]) sel.options[0].textContent = t("allAreas");
-  });
-  // Re-renderizar tabla si hay datos
-  if (token) buscar(paginaActual);
+  if (token) { renderAreas(); buscar(paginaActual); }
   // Re-renderizar lista de usuarios si el panel está abierto
   if (document.getElementById("perfil-modal").classList.contains("open") && usuarioActual?.rol === "admin") {
     cargarUsuarios();
@@ -516,11 +511,17 @@ async function doLogin() {
 
 async function cargarAreas() {
   const res = await fetch(`${API}/areas/`, { headers: { Authorization: `Bearer ${token}` } });
-  const areas = await res.json();
+  areasCache = await res.json();
+  renderAreas();
+}
+
+function renderAreas() {
   ["area", "upload-area"].forEach(id => {
     const sel = document.getElementById(id);
+    const prev = sel.value;
     sel.innerHTML = `<option value="">${t("allAreas")}</option>`;
-    areas.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.nombre}</option>`);
+    areasCache.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.nombre}</option>`);
+    sel.value = prev;
   });
 }
 
