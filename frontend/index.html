@@ -10,7 +10,11 @@
 
     header { background: #1a1a2e; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
     header h1 { font-size: 1.2rem; }
-    #user-info { font-size: 0.85rem; opacity: 0.8; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    #lang-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 0.78rem; cursor: pointer; padding: 3px 10px; border-radius: 4px; font-weight: 600; letter-spacing: 0.05em; }
+    #lang-btn:hover { background: rgba(255,255,255,0.28); }
+    #user-info-btn { background: none; border: none; color: white; font-size: 0.85rem; opacity: 0.85; cursor: pointer; padding: 4px 10px; border-radius: 6px; transition: background 0.15s; }
+    #user-info-btn:hover { background: rgba(255,255,255,0.12); opacity: 1; }
 
     /* Login */
     #login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -49,19 +53,45 @@
     .badge-xlsx  { background: #dcfce7; color: #15803d; }
     .badge-pptx  { background: #fef3c7; color: #b45309; }
     .badge-otro  { background: #f3f4f6; color: #374151; }
+    .badge-admin  { background: #1a1a2e; color: white; }
+    .badge-editor { background: #dbeafe; color: #1d4ed8; }
+    .badge-lector { background: #f3f4f6; color: #374151; }
 
     .pagination { display: flex; gap: 6px; margin-top: 1rem; justify-content: center; }
     .pagination button { padding: 5px 12px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem; }
     .pagination button.active { background: #2563eb; color: white; border-color: #2563eb; }
 
-    /* Upload modal */
+    /* Modales */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
     .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 8px; padding: 1.5rem; width: 420px; }
+    .modal { background: white; border-radius: 8px; padding: 1.5rem; width: 420px; max-height: 90vh; overflow-y: auto; }
     .modal h3 { margin-bottom: 1rem; }
     .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
     .btn-cancel { background: #f3f4f6; color: #374151; }
     #upload-status { font-size: 0.83rem; margin-top: 0.5rem; }
+
+    /* Modal perfil */
+    #perfil-modal .modal { width: 520px; max-width: 95%; }
+    .perfil-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .perfil-header h3 { font-size: 1.1rem; }
+    .btn-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #888; line-height: 1; padding: 0 4px; }
+    .btn-close:hover { color: #333; }
+    .perfil-meta { font-size: 0.85rem; color: #666; margin-bottom: 1.25rem; }
+    .section-title { font-size: 0.9rem; font-weight: 600; color: #1a1a2e; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid #eee; }
+    .msg-ok  { color: #16a34a; font-size: 0.83rem; margin-top: 0.4rem; }
+    .msg-err { color: #c0392b; font-size: 0.83rem; margin-top: 0.4rem; }
+    .usuarios-table { width: 100%; font-size: 0.83rem; border-collapse: collapse; margin-bottom: 1rem; }
+    .usuarios-table th { background: #f8fafc; padding: 5px 8px; text-align: left; color: #666; font-weight: 500; }
+    .usuarios-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+    .add-user-box { background: #f8fafc; border-radius: 6px; padding: 1rem; margin-top: 0.5rem; }
+    .add-user-box .form-group { margin-bottom: 0.75rem; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-logout { background: #fee2e2; color: #b91c1c; }
+    .btn-logout:hover { background: #fecaca; }
+    .divider { border: none; border-top: 1px solid #eee; margin: 1.25rem 0; }
+    details summary { cursor: pointer; font-size: 0.88rem; color: #2563eb; user-select: none; }
+    details summary:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -69,16 +99,16 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
-    <h2>Gestor Documental</h2>
+    <h2 data-i18n="appTitle">Gestor Documental</h2>
     <div class="form-group">
-      <label>Email</label>
+      <label data-i18n="labelEmail">Email</label>
       <input type="email" id="login-email" placeholder="admin@gestor.local">
     </div>
     <div class="form-group">
-      <label>Contraseña</label>
-      <input type="password" id="login-pass" placeholder="••••••••">
+      <label data-i18n="labelPass">Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
     </div>
-    <button class="btn btn-primary" onclick="doLogin()">Ingresar</button>
+    <button class="btn btn-primary" onclick="doLogin()" data-i18n="btnLogin">Ingresar</button>
     <div class="error" id="login-error"></div>
   </div>
 </div>
@@ -86,41 +116,49 @@
 <!-- APP -->
 <div id="app-screen">
   <header>
-    <h1>Gestor Documental</h1>
-    <div id="user-info"></div>
+    <h1 data-i18n="appTitle">Gestor Documental</h1>
+    <div class="header-right">
+      <button id="lang-btn" onclick="toggleLang()">EN</button>
+      <button id="user-info-btn" onclick="abrirPerfil()" title=""></button>
+    </div>
   </header>
 
   <div class="container">
     <div class="search-bar">
-      <input type="text" id="q" placeholder="Buscar en contenido de documentos...">
+      <input type="text" id="q" data-i18n-ph="searchPH" placeholder="Buscar en contenido de documentos...">
       <select id="tipo">
-        <option value="">Todos los tipos</option>
+        <option value="" data-i18n="allTypes">Todos los tipos</option>
         <option value="pdf">PDF</option>
-        <option value="docx">Word</option>
-        <option value="xlsx">Excel</option>
-        <option value="pptx">PowerPoint</option>
+        <option value="docx" data-i18n="typeWord">Word</option>
+        <option value="xlsx" data-i18n="typeExcel">Excel</option>
+        <option value="pptx" data-i18n="typePPT">PowerPoint</option>
       </select>
       <select id="area"></select>
-      <div style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #555;">
-        <label for="desde">Desde:</label>
+      <div style="display:flex; align-items:center; gap:4px; font-size:0.85rem; color:#555;">
+        <label for="desde" data-i18n="labelDesde">Desde:</label>
         <input type="date" id="desde">
       </div>
-      <div style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #555;">
-        <label for="hasta">Hasta:</label>
+      <div style="display:flex; align-items:center; gap:4px; font-size:0.85rem; color:#555;">
+        <label for="hasta" data-i18n="labelHasta">Hasta:</label>
         <input type="date" id="hasta">
       </div>
-      <button class="btn btn-search" onclick="buscar(1)">Buscar</button>
+      <button class="btn btn-search" onclick="buscar(1)" data-i18n="btnSearch">Buscar</button>
     </div>
 
     <div class="results-header">
       <span id="total-label">—</span>
-      <button class="btn btn-upload" onclick="abrirModal()">+ Subir archivo</button>
+      <button class="btn btn-upload" onclick="abrirModal()" data-i18n="btnUpload">+ Subir archivo</button>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Nombre</th><th>Tipo</th><th>Área</th><th>Fecha subida</th><th>Tamaño</th><th>Acciones</th>
+          <th data-i18n="colName">Nombre</th>
+          <th data-i18n="colType">Tipo</th>
+          <th data-i18n="colArea">Área</th>
+          <th data-i18n="colDate">Fecha subida</th>
+          <th data-i18n="colSize">Tamaño</th>
+          <th data-i18n="colActions">Acciones</th>
         </tr>
       </thead>
       <tbody id="tabla-docs"></tbody>
@@ -133,60 +171,331 @@
 <!-- MODAL SUBIDA -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3>Subir documento</h3>
+    <h3 data-i18n="modalUploadTitle">Subir documento</h3>
     <div class="form-group">
-      <label>Archivo</label>
+      <label data-i18n="labelFile">Archivo</label>
       <input type="file" id="file-input" accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt">
     </div>
     <div class="form-group">
-      <label>Área</label>
+      <label data-i18n="labelArea">Área</label>
       <select id="upload-area"></select>
     </div>
     <div class="form-group">
-      <label>Fecha del documento</label>
+      <label data-i18n="labelDocDate">Fecha del documento</label>
       <input type="date" id="upload-fecha">
     </div>
     <div id="upload-status"></div>
     <div class="modal-footer">
-      <button class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-primary" style="width:auto" onclick="subirArchivo()">Subir</button>
+      <button class="btn btn-cancel" onclick="cerrarModal()" data-i18n="btnCancel">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="subirArchivo()" data-i18n="btnUploadSubmit">Subir</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL VISTA PREVIA -->
 <div class="modal-overlay" id="preview-modal">
-  <div class="modal" style="width: 600px; max-width: 90%;">
-    <h3 id="preview-title" style="margin-bottom: 1rem; word-break: break-all;">Vista previa del documento</h3>
+  <div class="modal" style="width:600px; max-width:90%;">
+    <h3 id="preview-title" style="margin-bottom:1rem; word-break:break-all;"></h3>
     <div class="form-group">
-      <label>Texto extraído (Contenido)</label>
-      <textarea id="preview-content" rows="12" readonly style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 0.85rem; background: #f8fafc; resize: vertical;"></textarea>
+      <label data-i18n="labelExtracted">Texto extraído (Contenido)</label>
+      <textarea id="preview-content" rows="12" readonly style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; font-family:monospace; font-size:0.85rem; background:#f8fafc; resize:vertical;"></textarea>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-cancel" onclick="cerrarPreview()">Cerrar</button>
+      <button class="btn btn-cancel" onclick="cerrarPreview()" data-i18n="btnClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERFIL -->
+<div class="modal-overlay" id="perfil-modal">
+  <div class="modal">
+    <div class="perfil-header">
+      <div>
+        <h3 id="perfil-nombre"></h3>
+        <div class="perfil-meta">
+          <span id="perfil-email"></span> &nbsp;·&nbsp;
+          <span class="badge" id="perfil-rol-badge"></span>
+        </div>
+      </div>
+      <button class="btn-close" onclick="cerrarPerfil()">×</button>
+    </div>
+
+    <p class="section-title" data-i18n="sectionPass">Cambiar contraseña</p>
+    <div class="form-group">
+      <label data-i18n="labelCurrentPass">Contraseña actual</label>
+      <input type="password" id="pass-actual" placeholder="••••••••">
+    </div>
+    <div class="form-group">
+      <label data-i18n="labelNewPass">Nueva contraseña</label>
+      <input type="password" id="pass-nueva" data-i18n-ph="passMinPH" placeholder="Mínimo 8 caracteres">
+    </div>
+    <div class="form-group">
+      <label data-i18n="labelConfirmPass">Confirmar nueva contraseña</label>
+      <input type="password" id="pass-confirmar" placeholder="••••••••">
+    </div>
+    <div id="pass-status"></div>
+    <button class="btn btn-primary" style="width:auto; margin-top:0.5rem;" onclick="cambiarContrasena()" data-i18n="btnSavePass">Guardar contraseña</button>
+
+    <div id="admin-section" style="display:none;">
+      <hr class="divider">
+      <p class="section-title" data-i18n="sectionUsers">Gestión de usuarios</p>
+      <div id="lista-usuarios"></div>
+      <details id="add-user-details">
+        <summary data-i18n="addUserLabel">+ Agregar nuevo usuario</summary>
+        <div class="add-user-box">
+          <div class="form-group">
+            <label data-i18n="labelFullName">Nombre</label>
+            <input type="text" id="nuevo-nombre" data-i18n-ph="fullNamePH" placeholder="Nombre completo">
+          </div>
+          <div class="form-group">
+            <label data-i18n="labelEmail">Email</label>
+            <input type="email" id="nuevo-email" data-i18n-ph="emailPH" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="labelPassword">Contraseña</label>
+            <input type="password" id="nuevo-pass" data-i18n-ph="passMinPH" placeholder="Mínimo 8 caracteres">
+          </div>
+          <div class="form-group">
+            <label data-i18n="labelRole">Rol</label>
+            <select id="nuevo-rol">
+              <option value="lector" data-i18n="roleReader">Lector</option>
+              <option value="editor" data-i18n="roleEditor">Editor</option>
+              <option value="admin" data-i18n="roleAdmin">Admin</option>
+            </select>
+          </div>
+          <div id="nuevo-usuario-status"></div>
+          <button class="btn btn-primary" style="width:auto; margin-top:0.5rem;" onclick="crearUsuario()" data-i18n="btnCreateUser">Crear usuario</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="modal-footer" style="border-top:1px solid #eee; padding-top:1rem;">
+      <button class="btn btn-logout" onclick="cerrarSesion()" data-i18n="btnLogout">Cerrar sesión</button>
+      <button class="btn btn-cancel" onclick="cerrarPerfil()" data-i18n="btnClose">Cerrar</button>
     </div>
   </div>
 </div>
 
 <script>
-const API = "";  // la API y esta página se sirven desde el mismo servidor
-const MAX_SUBIDA_MB = 100;  // igual que MAX_SUBIDA_MB del servidor (api/core/config.py)
+const API = "";
+const MAX_SUBIDA_MB = 100;
 let token = null;
 let usuarioActual = null;
 let paginaActual = 1;
+let lang = "es";
+
+// ── Traducciones ─────────────────────────────────────────────────────────────
+
+const I18N = {
+  es: {
+    appTitle:      "Gestor Documental",
+    labelEmail:    "Email",
+    labelPass:     "Contraseña",
+    btnLogin:      "Ingresar",
+    searchPH:      "Buscar en contenido de documentos...",
+    allTypes:      "Todos los tipos",
+    typeWord:      "Word",
+    typeExcel:     "Excel",
+    typePPT:       "PowerPoint",
+    allAreas:      "Todas las áreas",
+    labelDesde:    "Desde:",
+    labelHasta:    "Hasta:",
+    btnSearch:     "Buscar",
+    btnUpload:     "+ Subir archivo",
+    colName:       "Nombre",
+    colType:       "Tipo",
+    colArea:       "Área",
+    colDate:       "Fecha subida",
+    colSize:       "Tamaño",
+    colActions:    "Acciones",
+    btnView:       "Ver",
+    btnDownload:   "Descargar",
+    btnDelete:     "Eliminar",
+    modalUploadTitle: "Subir documento",
+    labelFile:     "Archivo",
+    labelArea:     "Área",
+    labelDocDate:  "Fecha del documento",
+    btnCancel:     "Cancelar",
+    btnUploadSubmit: "Subir",
+    labelExtracted: "Texto extraído (Contenido)",
+    btnClose:      "Cerrar",
+    sectionPass:   "Cambiar contraseña",
+    labelCurrentPass:  "Contraseña actual",
+    labelNewPass:      "Nueva contraseña",
+    labelConfirmPass:  "Confirmar nueva contraseña",
+    passMinPH:     "Mínimo 8 caracteres",
+    btnSavePass:   "Guardar contraseña",
+    sectionUsers:  "Gestión de usuarios",
+    colUserName:   "Nombre",
+    colUserEmail:  "Email",
+    colUserRole:   "Rol",
+    addUserLabel:  "+ Agregar nuevo usuario",
+    labelFullName: "Nombre",
+    labelPassword: "Contraseña",
+    labelRole:     "Rol",
+    fullNamePH:    "Nombre completo",
+    emailPH:       "correo@ejemplo.com",
+    roleReader:    "Lector",
+    roleEditor:    "Editor",
+    roleAdmin:     "Admin",
+    btnCreateUser: "Crear usuario",
+    btnLogout:     "Cerrar sesión",
+    userInfoTitle: "Ver perfil",
+    rolLabel:      { admin: "Admin", editor: "Editor", lector: "Lector" },
+    docsFound:   n  => `${n} documento(s) encontrado(s)`,
+    errSelectFile:   "Selecciona un archivo.",
+    errFileSize: mb  => `El archivo supera el límite de ${mb} MB.`,
+    uploading:       "Subiendo...",
+    uploadOk:        "¡Archivo subido correctamente!",
+    errFillFields:   "Completa todos los campos.",
+    errPassMismatch: "Las contraseñas nuevas no coinciden.",
+    errPassShort:    "La nueva contraseña debe tener al menos 8 caracteres.",
+    saving:          "Guardando...",
+    passOk:          "Contraseña actualizada correctamente.",
+    creating:        "Creando...",
+    userOk:          "Usuario creado correctamente.",
+    errUserPassShort:"La contraseña debe tener al menos 8 caracteres.",
+    errWrongCreds:   "Credenciales incorrectas",
+    confirmDelDoc:   "¿Estás seguro de que deseas eliminar este documento? Esta acción no se puede deshacer.",
+    errDelDoc:   d   => `Error al eliminar: ${d || "Permisos insuficientes"}`,
+    errConn:         "Error de conexión al intentar eliminar el documento",
+    noUsers:         "No hay usuarios.",
+    confirmDelUser:  "¿Eliminar este usuario? No podrá ingresar al sistema.",
+    errDelUser:      "Error al eliminar el usuario.",
+    errLoadDoc:      "No se pudo cargar el detalle del documento",
+    noContent:       "(Sin texto extraído o documento vacío)",
+  },
+  en: {
+    appTitle:      "Document Manager",
+    labelEmail:    "Email",
+    labelPass:     "Password",
+    btnLogin:      "Log in",
+    searchPH:      "Search document content...",
+    allTypes:      "All types",
+    typeWord:      "Word",
+    typeExcel:     "Excel",
+    typePPT:       "PowerPoint",
+    allAreas:      "All areas",
+    labelDesde:    "From:",
+    labelHasta:    "To:",
+    btnSearch:     "Search",
+    btnUpload:     "+ Upload file",
+    colName:       "Name",
+    colType:       "Type",
+    colArea:       "Area",
+    colDate:       "Upload date",
+    colSize:       "Size",
+    colActions:    "Actions",
+    btnView:       "View",
+    btnDownload:   "Download",
+    btnDelete:     "Delete",
+    modalUploadTitle: "Upload document",
+    labelFile:     "File",
+    labelArea:     "Area",
+    labelDocDate:  "Document date",
+    btnCancel:     "Cancel",
+    btnUploadSubmit: "Upload",
+    labelExtracted: "Extracted text (Content)",
+    btnClose:      "Close",
+    sectionPass:   "Change password",
+    labelCurrentPass:  "Current password",
+    labelNewPass:      "New password",
+    labelConfirmPass:  "Confirm new password",
+    passMinPH:     "At least 8 characters",
+    btnSavePass:   "Save password",
+    sectionUsers:  "User management",
+    colUserName:   "Name",
+    colUserEmail:  "Email",
+    colUserRole:   "Role",
+    addUserLabel:  "+ Add new user",
+    labelFullName: "Name",
+    labelPassword: "Password",
+    labelRole:     "Role",
+    fullNamePH:    "Full name",
+    emailPH:       "email@example.com",
+    roleReader:    "Reader",
+    roleEditor:    "Editor",
+    roleAdmin:     "Admin",
+    btnCreateUser: "Create user",
+    btnLogout:     "Log out",
+    userInfoTitle: "View profile",
+    rolLabel:      { admin: "Admin", editor: "Editor", lector: "Reader" },
+    docsFound:   n  => `${n} document(s) found`,
+    errSelectFile:   "Select a file.",
+    errFileSize: mb  => `File exceeds the ${mb} MB limit.`,
+    uploading:       "Uploading...",
+    uploadOk:        "File uploaded successfully!",
+    errFillFields:   "Fill in all fields.",
+    errPassMismatch: "New passwords do not match.",
+    errPassShort:    "New password must be at least 8 characters.",
+    saving:          "Saving...",
+    passOk:          "Password updated successfully.",
+    creating:        "Creating...",
+    userOk:          "User created successfully.",
+    errUserPassShort:"Password must be at least 8 characters.",
+    errWrongCreds:   "Incorrect credentials",
+    confirmDelDoc:   "Are you sure you want to delete this document? This action cannot be undone.",
+    errDelDoc:   d   => `Delete error: ${d || "Insufficient permissions"}`,
+    errConn:         "Connection error while trying to delete the document",
+    noUsers:         "No users.",
+    confirmDelUser:  "Delete this user? They will no longer be able to log in.",
+    errDelUser:      "Error deleting user.",
+    errLoadDoc:      "Could not load document details",
+    noContent:       "(No text extracted or empty document)",
+  },
+};
+
+function t(key, ...args) {
+  const val = I18N[lang][key];
+  return typeof val === "function" ? val(...args) : (val ?? key);
+}
+
+function applyLang() {
+  document.title = t("appTitle");
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  document.getElementById("lang-btn").textContent = lang === "es" ? "EN" : "ES";
+  if (usuarioActual) {
+    const rol = t("rolLabel")[usuarioActual.rol] ?? usuarioActual.rol;
+    document.getElementById("user-info-btn").textContent = `${usuarioActual.nombre} (${rol}) ▾`;
+    document.getElementById("user-info-btn").title = t("userInfoTitle");
+  }
+  // Actualizar primera opción de los selects de área
+  ["area", "upload-area"].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel && sel.options[0]) sel.options[0].textContent = t("allAreas");
+  });
+  // Re-renderizar tabla si hay datos
+  if (token) buscar(paginaActual);
+  // Re-renderizar lista de usuarios si el panel está abierto
+  if (document.getElementById("perfil-modal").classList.contains("open") && usuarioActual?.rol === "admin") {
+    cargarUsuarios();
+  }
+}
+
+function toggleLang() {
+  lang = lang === "es" ? "en" : "es";
+  applyLang();
+}
+
+// ── Login ────────────────────────────────────────────────────────────────────
 
 async function doLogin() {
   const email = document.getElementById("login-email").value;
   const pass  = document.getElementById("login-pass").value;
   const form  = new URLSearchParams({ username: email, password: pass });
 
-  const res = await fetch(`${API}/auth/login`, { 
-    method: "POST", 
+  const res = await fetch(`${API}/auth/login`, {
+    method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form 
+    body: form
   });
   if (!res.ok) {
-    const err = res.status === 429 ? (await res.json()).detail : "Credenciales incorrectas";
+    const err = res.status === 429 ? (await res.json()).detail : t("errWrongCreds");
     document.getElementById("login-error").textContent = err;
     return;
   }
@@ -194,33 +503,37 @@ async function doLogin() {
   const data = await res.json();
   token = data.access_token;
   usuarioActual = data.usuario;
-  document.getElementById("user-info").textContent = `${data.usuario.nombre} (${data.usuario.rol})`;
+  const rol = t("rolLabel")[usuarioActual.rol] ?? usuarioActual.rol;
+  document.getElementById("user-info-btn").textContent = `${usuarioActual.nombre} (${rol}) ▾`;
+  document.getElementById("user-info-btn").title = t("userInfoTitle");
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   cargarAreas();
   buscar(1);
 }
 
+// ── Áreas ────────────────────────────────────────────────────────────────────
+
 async function cargarAreas() {
   const res = await fetch(`${API}/areas/`, { headers: { Authorization: `Bearer ${token}` } });
   const areas = await res.json();
-  const selects = ["area", "upload-area"];
-  selects.forEach(id => {
+  ["area", "upload-area"].forEach(id => {
     const sel = document.getElementById(id);
-    sel.innerHTML = '<option value="">Todas las áreas</option>';
+    sel.innerHTML = `<option value="">${t("allAreas")}</option>`;
     areas.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.nombre}</option>`);
   });
 }
 
+// ── Documentos ───────────────────────────────────────────────────────────────
+
 async function buscar(pagina) {
   paginaActual = pagina;
+  const params = new URLSearchParams({ pagina, limite: 20 });
   const q       = document.getElementById("q").value;
   const tipo    = document.getElementById("tipo").value;
   const area_id = document.getElementById("area").value;
   const desde   = document.getElementById("desde").value;
   const hasta   = document.getElementById("hasta").value;
-
-  const params = new URLSearchParams({ pagina, limite: 20 });
   if (q)       params.append("q", q);
   if (tipo)    params.append("tipo", tipo);
   if (area_id) params.append("area_id", area_id);
@@ -230,7 +543,7 @@ async function buscar(pagina) {
   const res  = await fetch(`${API}/documentos/?${params}`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await res.json();
 
-  document.getElementById("total-label").textContent = `${data.total} documento(s) encontrado(s)`;
+  document.getElementById("total-label").textContent = t("docsFound", data.total);
 
   const tbody = document.getElementById("tabla-docs");
   tbody.innerHTML = data.datos.map(d => `
@@ -238,12 +551,12 @@ async function buscar(pagina) {
       <td>${d.nombre}</td>
       <td><span class="badge badge-${d.tipo}">${d.tipo.toUpperCase()}</span></td>
       <td>${d.area || '—'}</td>
-      <td>${new Date(d.fecha_subida).toLocaleDateString("es-CO")}</td>
+      <td>${new Date(d.fecha_subida).toLocaleDateString(lang === "es" ? "es-CO" : "en-US")}</td>
       <td>${d.tamanio_bytes ? (d.tamanio_bytes/1024).toFixed(1) + ' KB' : '—'}</td>
       <td>
-        <button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#2563eb; color:white; margin-right:4px;" onclick="verDocumento(${d.id})">Ver</button>
-        <button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#16a34a; color:white; margin-right:4px;" onclick="descargarDocumento(${d.id})">Descargar</button>
-        ${usuarioActual && usuarioActual.rol === 'admin' ? `<button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#dc2626; color:white;" onclick="eliminarDocumento(${d.id})">Eliminar</button>` : ''}
+        <button class="btn" style="padding:4px 10px;font-size:0.75rem;background:#2563eb;color:white;margin-right:4px;" onclick="verDocumento(${d.id})">${t("btnView")}</button>
+        <button class="btn" style="padding:4px 10px;font-size:0.75rem;background:#16a34a;color:white;margin-right:4px;" onclick="descargarDocumento(${d.id})">${t("btnDownload")}</button>
+        ${usuarioActual?.rol === "admin" ? `<button class="btn" style="padding:4px 10px;font-size:0.75rem;background:#dc2626;color:white;" onclick="eliminarDocumento(${d.id})">${t("btnDelete")}</button>` : ""}
       </td>
     </tr>
   `).join("");
@@ -251,7 +564,7 @@ async function buscar(pagina) {
   const pag = document.getElementById("paginacion");
   pag.innerHTML = "";
   for (let i = 1; i <= data.paginas; i++) {
-    pag.innerHTML += `<button class="${i===pagina?'active':''}" onclick="buscar(${i})">${i}</button>`;
+    pag.innerHTML += `<button class="${i===pagina?"active":""}" onclick="buscar(${i})">${i}</button>`;
   }
 }
 
@@ -261,19 +574,19 @@ async function subirArchivo() {
   const fecha   = document.getElementById("upload-fecha").value;
   const status  = document.getElementById("upload-status");
 
-  if (!file) { status.textContent = "Selecciona un archivo."; return; }
-  if (file.size > MAX_SUBIDA_MB * 1024 * 1024) { status.textContent = `El archivo supera el límite de ${MAX_SUBIDA_MB} MB.`; return; }
+  if (!file) { status.textContent = t("errSelectFile"); return; }
+  if (file.size > MAX_SUBIDA_MB * 1024 * 1024) { status.textContent = t("errFileSize", MAX_SUBIDA_MB); return; }
 
   const form = new FormData();
   form.append("file", file);
   if (area_id) form.append("area_id", area_id);
   if (fecha)   form.append("fecha_documento", fecha);
 
-  status.textContent = "Subiendo...";
+  status.textContent = t("uploading");
   const res = await fetch(`${API}/documentos/`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
 
   if (res.ok) {
-    status.textContent = "¡Archivo subido correctamente!";
+    status.textContent = t("uploadOk");
     setTimeout(() => { cerrarModal(); buscar(1); }, 1000);
   } else {
     const err = await res.json();
@@ -286,40 +599,181 @@ function cerrarModal() { document.getElementById("modal").classList.remove("open
 
 async function verDocumento(id) {
   const res = await fetch(`${API}/documentos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) { alert("No se pudo cargar el detalle del documento"); return; }
+  if (!res.ok) { alert(t("errLoadDoc")); return; }
   const doc = await res.json();
   document.getElementById("preview-title").textContent = doc.nombre;
-  document.getElementById("preview-content").value = doc.contenido || "(Sin texto extraído o documento vacío)";
+  document.getElementById("preview-content").value = doc.contenido || t("noContent");
   document.getElementById("preview-modal").classList.add("open");
 }
 
-function cerrarPreview() {
-  document.getElementById("preview-modal").classList.remove("open");
-}
+function cerrarPreview() { document.getElementById("preview-modal").classList.remove("open"); }
 
 function descargarDocumento(id) {
   window.location.href = `${API}/documentos/${id}/descargar?token=${token}`;
 }
 
 async function eliminarDocumento(id) {
-  if (!confirm("¿Estás seguro de que deseas eliminar este documento? Esta acción no se puede deshacer.")) {
-    return;
-  }
+  if (!confirm(t("confirmDelDoc"))) return;
   try {
-    const res = await fetch(`${API}/documentos/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await fetch(`${API}/documentos/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
       buscar(paginaActual);
     } else {
       const err = await res.json();
-      alert(`Error al eliminar: ${err.detail || 'Permisos insuficientes'}`);
+      alert(t("errDelDoc", err.detail));
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error de conexión al intentar eliminar el documento");
+  } catch {
+    alert(t("errConn"));
   }
+}
+
+// ── Perfil ────────────────────────────────────────────────────────────────────
+
+function abrirPerfil() {
+  document.getElementById("perfil-nombre").textContent = usuarioActual.nombre;
+  document.getElementById("perfil-email").textContent  = usuarioActual.email;
+  const badge = document.getElementById("perfil-rol-badge");
+  badge.textContent = t("rolLabel")[usuarioActual.rol] ?? usuarioActual.rol;
+  badge.className   = `badge badge-${usuarioActual.rol}`;
+
+  ["pass-actual", "pass-nueva", "pass-confirmar"].forEach(id => document.getElementById(id).value = "");
+  setPassStatus("", "");
+
+  const adminSec = document.getElementById("admin-section");
+  if (usuarioActual.rol === "admin") {
+    adminSec.style.display = "block";
+    cargarUsuarios();
+  } else {
+    adminSec.style.display = "none";
+  }
+
+  document.getElementById("perfil-modal").classList.add("open");
+}
+
+function cerrarPerfil() { document.getElementById("perfil-modal").classList.remove("open"); }
+
+function setPassStatus(msg, tipo) {
+  const el = document.getElementById("pass-status");
+  el.textContent = msg;
+  el.className   = tipo === "ok" ? "msg-ok" : tipo === "err" ? "msg-err" : "";
+}
+
+async function cambiarContrasena() {
+  const actual    = document.getElementById("pass-actual").value;
+  const nueva     = document.getElementById("pass-nueva").value;
+  const confirmar = document.getElementById("pass-confirmar").value;
+
+  if (!actual || !nueva || !confirmar) { setPassStatus(t("errFillFields"), "err"); return; }
+  if (nueva !== confirmar)             { setPassStatus(t("errPassMismatch"), "err"); return; }
+  if (nueva.length < 8)                { setPassStatus(t("errPassShort"), "err"); return; }
+
+  setPassStatus(t("saving"), "");
+  const res = await fetch(`${API}/usuarios/me/contrasena`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ contrasena_actual: actual, nueva_contrasena: nueva })
+  });
+
+  if (res.ok) {
+    setPassStatus(t("passOk"), "ok");
+    ["pass-actual", "pass-nueva", "pass-confirmar"].forEach(id => document.getElementById(id).value = "");
+  } else {
+    const err = await res.json();
+    setPassStatus(err.detail || t("errFillFields"), "err");
+  }
+}
+
+// ── Usuarios (admin) ──────────────────────────────────────────────────────────
+
+async function cargarUsuarios() {
+  const res = await fetch(`${API}/usuarios/`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return;
+  const usuarios = await res.json();
+  const lista = document.getElementById("lista-usuarios");
+
+  if (!usuarios.length) {
+    lista.innerHTML = `<p style="font-size:0.85rem;color:#666;margin-bottom:0.75rem;">${t("noUsers")}</p>`;
+    return;
+  }
+
+  lista.innerHTML = `
+    <table class="usuarios-table">
+      <thead><tr>
+        <th>${t("colUserName")}</th>
+        <th>${t("colUserEmail")}</th>
+        <th>${t("colUserRole")}</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${usuarios.map(u => `
+          <tr>
+            <td>${u.nombre}</td>
+            <td style="color:#555;">${u.email}</td>
+            <td><span class="badge badge-${u.rol}">${t("rolLabel")[u.rol] ?? u.rol}</span></td>
+            <td>
+              ${u.rol !== "admin" && u.id !== usuarioActual.id
+                ? `<button class="btn btn-danger" style="padding:3px 8px;font-size:0.75rem;" onclick="desactivarUsuario(${u.id})">${t("btnDelete")}</button>`
+                : ""}
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function desactivarUsuario(id) {
+  if (!confirm(t("confirmDelUser"))) return;
+  const res = await fetch(`${API}/usuarios/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  if (res.ok) {
+    cargarUsuarios();
+  } else {
+    const err = await res.json();
+    alert(err.detail || t("errDelUser"));
+  }
+}
+
+async function crearUsuario() {
+  const nombre   = document.getElementById("nuevo-nombre").value.trim();
+  const email    = document.getElementById("nuevo-email").value.trim();
+  const password = document.getElementById("nuevo-pass").value;
+  const rol      = document.getElementById("nuevo-rol").value;
+  const status   = document.getElementById("nuevo-usuario-status");
+  const set = (msg, tipo) => { status.textContent = msg; status.className = tipo === "ok" ? "msg-ok" : "msg-err"; };
+
+  if (!nombre || !email || !password) { set(t("errFillFields"), "err"); return; }
+  if (password.length < 8)            { set(t("errUserPassShort"), "err"); return; }
+
+  set(t("creating"), "");
+  const res = await fetch(`${API}/usuarios/`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, email, password, rol })
+  });
+
+  if (res.ok) {
+    set(t("userOk"), "ok");
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-email").value  = "";
+    document.getElementById("nuevo-pass").value   = "";
+    document.getElementById("nuevo-rol").value    = "lector";
+    document.getElementById("add-user-details").removeAttribute("open");
+    cargarUsuarios();
+  } else {
+    const err = await res.json();
+    set(err.detail || t("errFillFields"), "err");
+  }
+}
+
+function cerrarSesion() {
+  token = null;
+  usuarioActual = null;
+  document.getElementById("perfil-modal").classList.remove("open");
+  document.getElementById("app-screen").style.display  = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("login-email").value = "";
+  document.getElementById("login-pass").value  = "";
+  document.getElementById("login-error").textContent = "";
 }
 </script>
 </body>
