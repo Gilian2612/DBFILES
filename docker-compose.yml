@@ -24,6 +24,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
       UPLOAD_DIR: /uploads
+      MAX_SUBIDA_MB: ${MAX_SUBIDA_MB:-100}            # opcional en .env
+      SUBIDAS_POR_MINUTO: ${SUBIDAS_POR_MINUTO:-25}   # opcional en .env, por usuario
+      LOGIN_INTENTOS_POR_MINUTO: ${LOGIN_INTENTOS_POR_MINUTO:-10}  # opcional en .env, por email
     volumes:
       - ./uploads:/uploads
       - ./frontend:/frontend:ro

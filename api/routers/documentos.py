@@ -1,17 +1,24 @@
-import os, shutil, uuid
+import os, uuid
+from datetime import date
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from core.config import get_db, UPLOAD_DIR, SECRET_KEY, ALGORITHM
+from core.config import get_db, UPLOAD_DIR, SECRET_KEY, ALGORITHM, MAX_SUBIDA_MB, MAX_SUBIDA_BYTES, SUBIDAS_POR_MINUTO
 from core.auth import get_current_user
-from models.models import Documento, Usuario
+from core.limites import LimiteRitmo
+from models.models import Area, Documento, Usuario
 from services.parser import extraer_texto, detectar_tipo
 from jose import jwt, JWTError
 
 router = APIRouter()
+
+limite_subidas = LimiteRitmo(
+    SUBIDAS_POR_MINUTO, 60,
+    f"Límite de {SUBIDAS_POR_MINUTO} subidas por minuto alcanzado. Espera un momento.",
+)
 
 # -----------------------------------------------
 # Subir documento
@@ -19,21 +26,34 @@ router = APIRouter()
 @router.post("/")
 async def subir_documento(
     file: UploadFile = File(...),
-    area_id: Optional[int] = None,
-    fecha_documento: Optional[str] = None,
+    area_id: Optional[int] = Form(None),           # el frontend los manda en el formulario,
+    fecha_documento: Optional[date] = Form(None),  # no en la URL
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
     if current_user.rol not in ("admin", "editor"):
         raise HTTPException(status_code=403, detail="Sin permisos para subir documentos")
 
+    limite_subidas.registrar(current_user.id)
+
+    if area_id is not None and not db.query(Area).filter(Area.id == area_id).first():
+        raise HTTPException(status_code=400, detail="El área seleccionada no existe")
+
     tipo = detectar_tipo(file.filename)
     nombre_unico = f"{uuid.uuid4()}_{file.filename}"
     ruta = os.path.join(UPLOAD_DIR, nombre_unico)
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+    escrito = 0
     with open(ruta, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        while bloque := file.file.read(1024 * 1024):
+            escrito += len(bloque)
+            if escrito > MAX_SUBIDA_BYTES:
+                break
+            f.write(bloque)
+    if escrito > MAX_SUBIDA_BYTES:
+        os.remove(ruta)
+        raise HTTPException(status_code=413, detail=f"El archivo supera el límite de {MAX_SUBIDA_MB} MB")
 
     contenido = extraer_texto(ruta, tipo)
     tamanio   = os.path.getsize(ruta)
@@ -92,7 +112,8 @@ def buscar_documentos(
         params["desde"] = desde
 
     if hasta:
-        condiciones.append("d.fecha_subida <= :hasta")
+        # Incluye todo el día "hasta" (fecha_subida tiene hora)
+        condiciones.append("d.fecha_subida < CAST(:hasta AS date) + 1")
         params["hasta"] = hasta
 
     where = " AND ".join(condiciones)
