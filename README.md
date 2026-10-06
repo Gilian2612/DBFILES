@@ -15,9 +15,11 @@ Sistema de gestión y búsqueda documental con servidor central y múltiples cli
 docker-compose up --build
 ```
 
-- API:      http://localhost:8000
-- Docs API: http://localhost:8000/docs
-- Frontend: http://localhost:80
+- App (página + API): http://localhost
+- Docs API:           http://localhost/docs
+
+FastAPI sirve tanto la API como el frontend (`frontend/index.html`), en el puerto 80.
+La base de datos (5432) no se publica fuera de Docker.
 
 ---
 
@@ -56,7 +58,7 @@ gestor-documental/
 ├── db/
 │   └── init.sql            # esquema y datos iniciales
 ├── frontend/
-│   └── index.html          # cliente web
+│   └── index.html          # cliente web (lo sirve FastAPI en "/")
 └── uploads/                # archivos subidos (volumen Docker)
 ```
 
