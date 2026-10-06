@@ -4,6 +4,8 @@ Sistema de gestión y búsqueda documental con servidor central y múltiples cli
 
 **Stack:** FastAPI + PostgreSQL + Docker + HTML/JS vanilla
 
+> Decisiones de diseño, alternativas descartadas y pendientes: [DECISIONS.md](DECISIONS.md).
+
 ---
 
 ## Levantar el proyecto
