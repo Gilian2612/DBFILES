@@ -5,16 +5,16 @@
 
 1. Run in terminal ./instalar.command inside the path of the repo: 
 
-![alt text](image.png)
+![alt text](docs/screenshots/image.png)
 
  Or double-clic the file "instalar.command" inside the folder 
 
- ![alt text](image-1.png)
+ ![alt text](docs/screenshots/image-1.png)
 
 
 2. Should have this as proof the host is running the service: 
 
-![alt text](<Captura de pantalla 2026-10-06 a la(s) 3.21.56 p.m..png>)
+![alt text](docs/screenshots/captura-3-21.png)
 
 
 ## FOR LOGIN IN SAME WIFI NETWORK DEVICES:
@@ -23,7 +23,7 @@
  Go to your internet web browser and find: 
  http://localhost:80
 
- ![alt text](image-2.png)
+ ![alt text](docs/screenshots/image-2.png)
 
 
 OR IN ANY DEVICE CONNECTED TO THE SAME WIFI NETWORK AS THE HOST: 
@@ -32,7 +32,7 @@ OR IN ANY DEVICE CONNECTED TO THE SAME WIFI NETWORK AS THE HOST:
 
  http://HOST_IP
 
-![alt text](<WhatsApp Image 2026-10-06 at 3.15.23 PM.jpeg>)
+![alt text](docs/screenshots/whatsapp-3-15.jpeg)
 
 
  You can find your host ip inside the host terminal with 
@@ -48,7 +48,7 @@ predetermined admin role
 
 - PASSWORD: Admin1234 
 
-![alt text](image-3.png)
+![alt text](docs/screenshots/image-3.png)
 
 Password can be changed in terminal by 
 
@@ -59,7 +59,7 @@ or inside the folder clicking the cambiar-admin.command file
 
 5. Inside the UI: 
 
-![alt text](image-4.png)
+![alt text](docs/screenshots/image-4.png)
 
 
  

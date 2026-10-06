@@ -1,5 +1,7 @@
 # Gestor Documental Multiusuario
 
+![CI](https://github.com/Gilian2612/DBFILES/actions/workflows/ci.yml/badge.svg)
+
 **Language / Idioma:** [English](#english) · [Español](#español)
 
 ---
@@ -137,7 +139,50 @@ There is no screen to manage users or areas yet: an admin does it from `http://<
 | GET    | /areas/                        | List areas                         |
 | POST   | /usuarios/                     | Create a user (admin only)         |
 | GET    | /usuarios/me                   | Current user's profile             |
+| PUT    | /usuarios/me/contrasena        | Change own password (all users)    |
 | GET    | /health                        | Server status                      |
+
+---
+
+## Unit tests
+
+The project uses **pytest-cov** (Coverage.py) for coverage reports. Current coverage: **97%**.
+
+### Run the tests
+
+```bash
+# Install test dependencies (once)
+docker exec gestor_api pip install pytest httpx pytest-cov -q
+
+# Copy tests into the container
+docker cp api/tests gestor_api:/app/tests
+docker cp api/pytest.ini gestor_api:/app/pytest.ini
+
+# Run
+docker exec gestor_api python -m pytest tests/ -v
+```
+
+### Coverage report
+
+```bash
+docker exec gestor_api python -m pytest tests/ --cov=. --cov-report=html --cov-report=term-missing
+# Copy the HTML report to your machine
+docker cp gestor_api:/app/htmlcov ./htmlcov
+# Open htmlcov/index.html in your browser
+```
+
+### What each file covers
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `test_auth.py` | 13 | `hash_password`, `verify_password`, JWT creation, login endpoint (200 / 401 / 422 / inactive user) |
+| `test_limites.py` | 6 | `LimiteRitmo`: under limit, at limit, window reset, independent keys, thread safety |
+| `test_parser.py` | 16 | `detectar_tipo` (all extensions), graceful failure on missing/corrupt files, real DOCX / XLSX / PPTX extraction |
+| `test_usuarios.py` | 16 | List (no `password_hash` exposed), password change, create, permission rules on delete |
+| `test_areas.py` | 9 | List, create, duplicate (400), delete, auth guards |
+| `test_documentos.py` | 25 | Upload (permissions, area validation, 413 middleware), list, filters, pagination, download, delete |
+
+> **Note:** full-text search (`q` parameter) uses PostgreSQL's `plainto_tsquery`. That test is marked `xfail` and is skipped automatically when running against SQLite. It passes when running against the real PostgreSQL container.
 
 ---
 
@@ -156,7 +201,17 @@ DBFILES/
 ├── api/
 │   ├── Dockerfile
 │   ├── requirements.txt
+│   ├── requirements-test.txt   # pytest, httpx, pytest-cov
+│   ├── pytest.ini
 │   ├── main.py             # app, upload size limit, serves the frontend
+│   ├── tests/
+│   │   ├── conftest.py         # fixtures, SQLite in-memory DB
+│   │   ├── test_auth.py
+│   │   ├── test_limites.py
+│   │   ├── test_parser.py
+│   │   ├── test_usuarios.py
+│   │   ├── test_areas.py
+│   │   └── test_documentos.py
 │   ├── core/
 │   │   ├── config.py       # DB, JWT, settings and limits
 │   │   ├── auth.py         # login, tokens, permissions
@@ -313,7 +368,50 @@ Todavía no hay pantalla para gestionar usuarios ni áreas: un admin lo hace des
 | GET    | /areas/                        | Listar áreas                       |
 | POST   | /usuarios/                     | Crear usuario (solo admin)         |
 | GET    | /usuarios/me                   | Perfil del usuario actual          |
+| PUT    | /usuarios/me/contrasena        | Cambiar contraseña propia (todos)  |
 | GET    | /health                        | Estado del servidor                |
+
+---
+
+## Pruebas unitarias
+
+El proyecto usa **pytest-cov** (Coverage.py) para reportes de cobertura. Cobertura actual: **97%**.
+
+### Correr las pruebas
+
+```bash
+# Instalar dependencias de prueba (una sola vez)
+docker exec gestor_api pip install pytest httpx pytest-cov -q
+
+# Copiar las pruebas al contenedor
+docker cp api/tests gestor_api:/app/tests
+docker cp api/pytest.ini gestor_api:/app/pytest.ini
+
+# Ejecutar
+docker exec gestor_api python -m pytest tests/ -v
+```
+
+### Reporte de cobertura
+
+```bash
+docker exec gestor_api python -m pytest tests/ --cov=. --cov-report=html --cov-report=term-missing
+# Copiar el reporte al equipo
+docker cp gestor_api:/app/htmlcov ./htmlcov
+# Abrir htmlcov/index.html en el navegador
+```
+
+### Qué cubre cada archivo
+
+| Archivo | Pruebas | Cubre |
+|---------|---------|-------|
+| `test_auth.py` | 13 | `hash_password`, `verify_password`, creación de JWT, endpoint de login (200 / 401 / 422 / usuario inactivo) |
+| `test_limites.py` | 6 | `LimiteRitmo`: bajo el límite, en el límite, expiración de ventana, claves independientes, concurrencia |
+| `test_parser.py` | 16 | `detectar_tipo` (todas las extensiones), fallo silencioso con archivos inexistentes o corruptos, extracción real de DOCX / XLSX / PPTX |
+| `test_usuarios.py` | 16 | Listado (sin exponer `password_hash`), cambio de contraseña, creación, reglas de permisos para eliminación |
+| `test_areas.py` | 9 | Listar, crear, duplicado (400), eliminar, guardias de autenticación |
+| `test_documentos.py` | 25 | Subida (permisos, validación de área, middleware 413), listado, filtros, paginación, descarga, eliminación |
+
+> **Nota:** la búsqueda de texto completo (parámetro `q`) usa `plainto_tsquery` de PostgreSQL. Esa prueba está marcada como `xfail` y se omite automáticamente al correr contra SQLite. Pasa cuando se corre contra el contenedor PostgreSQL real.
 
 ---
 
@@ -332,7 +430,17 @@ DBFILES/
 ├── api/
 │   ├── Dockerfile
 │   ├── requirements.txt
+│   ├── requirements-test.txt   # pytest, httpx, pytest-cov
+│   ├── pytest.ini
 │   ├── main.py             # app, límite de tamaño de subida, sirve el frontend
+│   ├── tests/
+│   │   ├── conftest.py         # fixtures, base SQLite en memoria
+│   │   ├── test_auth.py
+│   │   ├── test_limites.py
+│   │   ├── test_parser.py
+│   │   ├── test_usuarios.py
+│   │   ├── test_areas.py
+│   │   └── test_documentos.py
 │   ├── core/
 │   │   ├── config.py       # DB, JWT, configuración y límites
 │   │   ├── auth.py         # login, tokens, permisos
