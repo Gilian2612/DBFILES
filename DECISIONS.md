@@ -222,6 +222,58 @@ Los dos valores se pueden cambiar en el `.env` (`MAX_SUBIDA_MB`, `SUBIDAS_POR_MI
 - recordar la sesión 30 días;
 - obligar a cambiar el admin por defecto y no arrancar sin `SECRET_KEY`.
 
+## 11.3 Instalación: `.env.example` e `instalar.command`
+
+**Problema:** quien clonaba el repo y seguía el README no podía levantar el proyecto, porque no estaba documentado que hacía falta un `.env` ni qué variables lleva.
+
+- **`.env.example`:** plantilla comentada con las 4 variables obligatorias y los 3 límites opcionales. Advierte que `POSTGRES_USER` y `POSTGRES_DB` no se deben cambiar, porque los backups los usan.
+- **`instalar.command`** (Mac/Linux, mismo estilo que `freewilllawyer-voice`):
+  1. Comprueba Docker y lo abre si está cerrado.
+  2. Crea el `.env` con contraseñas aleatorias (`openssl rand`) **solo si no existe**.
+  3. Corre `docker compose up -d --build`.
+  4. Espera a que `/health` responda.
+  5. Muestra las direcciones: local, WiFi y Tailscale.
+  Se puede repetir sin perder datos.
+- **Verificado:** la sintaxis del script, la generación del `.env` y que Docker Compose lo lee bien. **Sin verificar:** la ejecución completa, porque Docker no estaba corriendo en el equipo de desarrollo.
+- **Versión para Windows:** `instalar.ps1` (ver §11.4).
+- **Encontrado al hacerlo:** no existe ninguna forma de cambiar la contraseña de un usuario (ni en la página ni en la API). El admin por defecto queda con `Admin1234`.
+
+## 11.4 Respaldos automáticos, restauración e instalador para Windows
+
+**Objetivo del autor:** que el servidor pueda ser **Mac o Windows**. La app ya funciona igual en los dos, porque corre en Docker. Lo que depende del sistema son los scripts, así que hay una versión de cada uno por sistema.
+
+| | Mac / Linux | Windows |
+|---|---|---|
+| Instalar | `instalar.command` | `instalar.ps1` |
+| Respaldo | `backup.sh` | `backup.ps1` (+ `backup.bat` como atajo) |
+| Respaldo diario | `programar-backup.command` (launchd; en Linux muestra la línea de cron) | `programar-backup.ps1` (Programador de tareas) |
+| Restaurar | `restaurar.sh` | `restaurar.ps1` |
+
+**Decisiones:**
+- **Rotación:** se conservan los últimos 14 respaldos (`BACKUPS_A_GUARDAR`), para que un respaldo diario no llene el disco.
+- **Usuario y base desde el `.env`:** los respaldos ya no tienen fijos `gestor_user` ni `gestor_documental`.
+- **En Mac**, los archivos que no cambiaron se enlazan al respaldo anterior (`rsync --link-dest`), así 14 respaldos no ocupan 14 veces lo mismo. **En Windows** se copian completos: no hay una herramienta equivalente igual de simple.
+- **Restaurar** pide escribir `SI` y antes hace un respaldo del estado actual. Ese respaldo de seguridad no rota, para no borrar justo el que se va a restaurar. Además, detiene la app mientras restaura, recrea la base y carga el volcado con `ON_ERROR_STOP`. Si algo falla, indica cómo volver al respaldo de seguridad.
+- **Respaldos compatibles entre sistemas:** el formato es el mismo, `db_backup.sql` + `uploads/`.
+- **Arreglo en `backup.ps1`:** antes pasaba el volcado por la tubería de PowerShell (`| Out-File`). Eso podía cambiar la codificación (tildes, ñ) y agregaba un BOM al principio. Ahora el volcado se hace dentro del contenedor y se copia con `docker cp`, byte a byte. Los restauradores quitan el BOM de los respaldos viejos.
+- **`backup.bat`** pasó a ser un atajo de doble clic que llama a `backup.ps1`, para no mantener dos copias de la misma lógica.
+- **Scripts de Windows sin tildes:** Windows PowerShell 5 lee mal los acentos en archivos sin BOM.
+- **`instalar.ps1`** crea la regla de firewall del puerto 80 (solo redes privadas) si se ejecuta como administrador.
+
+**Verificado:**
+- Mac, con un `docker` y un `launchctl` simulados (Docker no estaba corriendo):
+  - el respaldo genera el volcado y la copia de `uploads/`;
+  - el archivo que no cambió queda enlazado (mismo inodo);
+  - la rotación deja los últimos N;
+  - restaurar se cancela sin tocar nada si no se escribe `SI`;
+  - restaurar quita el BOM, reemplaza `uploads/` y no borra el respaldo restaurado;
+  - restaurar funciona con la ruta como argumento desde otra carpeta;
+  - el programador genera un plist válido, rechaza horas inválidas y `--quitar` lo elimina.
+- **Sin verificar:**
+  - **ningún script de Windows se ejecutó** (no había PowerShell en el equipo de desarrollo; solo se revisó que fueran ASCII);
+  - en ningún sistema se probó contra PostgreSQL real;
+  - no se probó que la regla de firewall alcance para el acceso por Tailscale.
+
 ## 12. Cronología (commits)
 
 | Fecha | Commit | Qué |
