@@ -10,8 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+    # Sin "ports": la base de datos solo es accesible desde los otros contenedores
     networks:
       - gestor_net
 
@@ -25,24 +24,17 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
       UPLOAD_DIR: /uploads
+      MAX_SUBIDA_MB: ${MAX_SUBIDA_MB:-100}            # opcional en .env
+      SUBIDAS_POR_MINUTO: ${SUBIDAS_POR_MINUTO:-25}   # opcional en .env, por usuario
+      LOGIN_INTENTOS_POR_MINUTO: ${LOGIN_INTENTOS_POR_MINUTO:-10}  # opcional en .env, por email
     volumes:
       - ./uploads:/uploads
-      - ./api:/app
+      - ./frontend:/frontend:ro
+    # La app (página + API) queda en http://<servidor> (puerto 80 -> 8000 del contenedor)
     ports:
-      - "8000:8000"
+      - "80:8000"
     depends_on:
       - db
-    networks:
-      - gestor_net
-
-  frontend:
-    image: nginx:alpine
-    container_name: gestor_frontend
-    restart: always
-    volumes:
-      - ./frontend:/usr/share/nginx/html:ro
-    ports:
-      - "80:80"
     networks:
       - gestor_net
 
