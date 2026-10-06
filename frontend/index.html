@@ -101,8 +101,14 @@
         <option value="pptx">PowerPoint</option>
       </select>
       <select id="area"></select>
-      <input type="date" id="desde" title="Desde">
-      <input type="date" id="hasta" title="Hasta">
+      <div style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #555;">
+        <label for="desde">Desde:</label>
+        <input type="date" id="desde">
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #555;">
+        <label for="hasta">Hasta:</label>
+        <input type="date" id="hasta">
+      </div>
       <button class="btn btn-search" onclick="buscar(1)">Buscar</button>
     </div>
 
@@ -114,7 +120,7 @@
     <table>
       <thead>
         <tr>
-          <th>Nombre</th><th>Tipo</th><th>Área</th><th>Fecha subida</th><th>Tamaño</th>
+          <th>Nombre</th><th>Tipo</th><th>Área</th><th>Fecha subida</th><th>Tamaño</th><th>Acciones</th>
         </tr>
       </thead>
       <tbody id="tabla-docs"></tbody>
@@ -148,9 +154,24 @@
   </div>
 </div>
 
+<!-- MODAL VISTA PREVIA -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal" style="width: 600px; max-width: 90%;">
+    <h3 id="preview-title" style="margin-bottom: 1rem; word-break: break-all;">Vista previa del documento</h3>
+    <div class="form-group">
+      <label>Texto extraído (Contenido)</label>
+      <textarea id="preview-content" rows="12" readonly style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 0.85rem; background: #f8fafc; resize: vertical;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="cerrarPreview()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = "http://localhost:8000";
 let token = null;
+let usuarioActual = null;
 let paginaActual = 1;
 
 async function doLogin() {
@@ -158,11 +179,16 @@ async function doLogin() {
   const pass  = document.getElementById("login-pass").value;
   const form  = new URLSearchParams({ username: email, password: pass });
 
-  const res = await fetch(`${API}/auth/login`, { method: "POST", body: form });
+  const res = await fetch(`${API}/auth/login`, { 
+    method: "POST", 
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form 
+  });
   if (!res.ok) { document.getElementById("login-error").textContent = "Credenciales incorrectas"; return; }
 
   const data = await res.json();
   token = data.access_token;
+  usuarioActual = data.usuario;
   document.getElementById("user-info").textContent = `${data.usuario.nombre} (${data.usuario.rol})`;
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
@@ -209,6 +235,11 @@ async function buscar(pagina) {
       <td>${d.area || '—'}</td>
       <td>${new Date(d.fecha_subida).toLocaleDateString("es-CO")}</td>
       <td>${d.tamanio_bytes ? (d.tamanio_bytes/1024).toFixed(1) + ' KB' : '—'}</td>
+      <td>
+        <button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#2563eb; color:white; margin-right:4px;" onclick="verDocumento(${d.id})">Ver</button>
+        <button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#16a34a; color:white; margin-right:4px;" onclick="descargarDocumento(${d.id})">Descargar</button>
+        ${usuarioActual && usuarioActual.rol === 'admin' ? `<button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#dc2626; color:white;" onclick="eliminarDocumento(${d.id})">Eliminar</button>` : ''}
+      </td>
     </tr>
   `).join("");
 
@@ -246,6 +277,44 @@ async function subirArchivo() {
 
 function abrirModal()  { document.getElementById("modal").classList.add("open"); }
 function cerrarModal() { document.getElementById("modal").classList.remove("open"); document.getElementById("upload-status").textContent = ""; }
+
+async function verDocumento(id) {
+  const res = await fetch(`${API}/documentos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) { alert("No se pudo cargar el detalle del documento"); return; }
+  const doc = await res.json();
+  document.getElementById("preview-title").textContent = doc.nombre;
+  document.getElementById("preview-content").value = doc.contenido || "(Sin texto extraído o documento vacío)";
+  document.getElementById("preview-modal").classList.add("open");
+}
+
+function cerrarPreview() {
+  document.getElementById("preview-modal").classList.remove("open");
+}
+
+function descargarDocumento(id) {
+  window.location.href = `${API}/documentos/${id}/descargar?token=${token}`;
+}
+
+async function eliminarDocumento(id) {
+  if (!confirm("¿Estás seguro de que deseas eliminar este documento? Esta acción no se puede deshacer.")) {
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/documentos/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      buscar(paginaActual);
+    } else {
+      const err = await res.json();
+      alert(`Error al eliminar: ${err.detail || 'Permisos insuficientes'}`);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error de conexión al intentar eliminar el documento");
+  }
+}
 </script>
 </body>
 </html>

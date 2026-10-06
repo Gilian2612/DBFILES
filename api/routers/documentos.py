@@ -1,13 +1,15 @@
 import os, shutil, uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from core.config import get_db, UPLOAD_DIR
+from core.config import get_db, UPLOAD_DIR, SECRET_KEY, ALGORITHM
 from core.auth import get_current_user
 from models.models import Documento, Usuario
 from services.parser import extraer_texto, detectar_tipo
+from jose import jwt, JWTError
 
 router = APIRouter()
 
@@ -130,6 +132,34 @@ def obtener_documento(doc_id: int, db: Session = Depends(get_db), current_user: 
     if not doc:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     return doc
+
+# -----------------------------------------------
+# Descargar documento
+# -----------------------------------------------
+@router.get("/{doc_id}/descargar")
+def descargar_documento(
+    doc_id: int, 
+    token: str = Query(...), 
+    db: Session = Depends(get_db)
+):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token inválido")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+    user = db.query(Usuario).filter(Usuario.id == int(user_id), Usuario.activo == True).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario no autorizado")
+
+    doc = db.query(Documento).filter(Documento.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    if not os.path.exists(doc.ruta):
+        raise HTTPException(status_code=404, detail="Archivo físico no encontrado en el servidor")
+    return FileResponse(path=doc.ruta, filename=doc.nombre, media_type="application/octet-stream")
 
 # -----------------------------------------------
 # Eliminar documento
