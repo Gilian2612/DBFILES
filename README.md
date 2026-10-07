@@ -146,7 +146,7 @@ There is no screen to manage users or areas yet: an admin does it from `http://<
 
 ## Unit tests
 
-The project uses **pytest-cov** (Coverage.py) for coverage reports. Current coverage: **97%**.
+The project uses **pytest-cov** (Coverage.py) for coverage reports. Current coverage: **94%**.
 
 ### Run the tests
 
@@ -375,7 +375,7 @@ Todavía no hay pantalla para gestionar usuarios ni áreas: un admin lo hace des
 
 ## Pruebas unitarias
 
-El proyecto usa **pytest-cov** (Coverage.py) para reportes de cobertura. Cobertura actual: **97%**.
+El proyecto usa **pytest-cov** (Coverage.py) para reportes de cobertura. Cobertura actual: **94%**.
 
 ### Correr las pruebas
 

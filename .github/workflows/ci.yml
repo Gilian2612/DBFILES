@@ -35,14 +35,13 @@ jobs:
         env:
           FRONTEND_DIR: /tmp/frontend_ci
           UPLOAD_DIR:   /tmp/uploads_ci
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: "sqlite:///:memory:"
           SECRET_KEY:   ci_test_secret_key_32bytes_xxxxx
         run: |
           mkdir -p /tmp/frontend_ci
           echo '<html><body>ci</body></html>' > /tmp/frontend_ci/index.html
           python -m pytest tests/ -v \
             --cov=. \
-            --cov-omit="tests/*" \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml
 
