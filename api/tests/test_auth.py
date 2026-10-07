@@ -2,7 +2,7 @@
 Pruebas para core/auth.py y el endpoint POST /auth/login.
 """
 import pytest
-from jose import jwt
+import jwt
 
 from core.auth import hash_password, verify_password, create_token
 from core.config import SECRET_KEY, ALGORITHM
@@ -89,3 +89,11 @@ def test_login_usuario_inactivo(client, db):
 def test_login_sin_cuerpo(client):
     res = client.post("/auth/login")
     assert res.status_code == 422
+
+
+# ── tokens inválidos ──────────────────────────────────────────────────────────
+
+def test_token_firmado_con_otra_clave_es_rechazado(client, admin):
+    falso = jwt.encode({"sub": str(admin.id)}, "otra_clave_distinta_de_32_bytes_xxxxxx", algorithm=ALGORITHM)
+    res = client.get("/usuarios/me", headers={"Authorization": f"Bearer {falso}"})
+    assert res.status_code == 401

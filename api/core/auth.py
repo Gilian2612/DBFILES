@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from datetime import datetime, timedelta, timezone
+import jwt
+from jwt import PyJWTError
 import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -26,7 +27,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_token(data: dict) -> str:
     payload = data.copy()
-    payload["exp"] = datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Usuario:
@@ -40,7 +41,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         user_id: int = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
+    except PyJWTError:
         raise credentials_exception
 
     user = db.query(Usuario).filter(Usuario.id == int(user_id), Usuario.activo == True).first()

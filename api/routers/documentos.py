@@ -11,7 +11,8 @@ from core.auth import get_current_user
 from core.limites import LimiteRitmo
 from models.models import Area, Documento, Usuario
 from services.parser import extraer_texto, detectar_tipo
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError
 
 router = APIRouter()
 
@@ -168,7 +169,7 @@ def descargar_documento(
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Token inválido")
-    except JWTError:
+    except PyJWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
     user = db.query(Usuario).filter(Usuario.id == int(user_id), Usuario.activo == True).first()
