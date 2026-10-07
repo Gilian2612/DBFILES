@@ -130,9 +130,9 @@ def buscar_documentos(
         WHERE {where}
         ORDER BY {rank_expr}
         LIMIT :limite OFFSET :offset
-    """)
+    """)  # nosec B608 - `where` joins fixed fragments; user input goes in bind params
 
-    count_sql = text(f"SELECT COUNT(*) FROM documentos d WHERE {where}")
+    count_sql = text(f"SELECT COUNT(*) FROM documentos d WHERE {where}")  # nosec B608 - same as above
 
     resultados = db.execute(sql, params).mappings().all()
     total      = db.execute(count_sql, {k: v for k, v in params.items() if k not in ("limite", "offset")}).scalar()

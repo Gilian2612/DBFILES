@@ -30,6 +30,6 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     token = create_token({"sub": str(user.id), "rol": user.rol})
     return {
         "access_token": token,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec B105 - OAuth2 token type, not a password
         "usuario": {"id": user.id, "nombre": user.nombre, "rol": user.rol}
     }
