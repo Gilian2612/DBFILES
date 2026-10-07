@@ -62,6 +62,15 @@ If macOS blocks it because the project was downloaded as a zip, run this once fr
 FastAPI serves both the API and the frontend (`frontend/index.html`) on port 80.
 The database (5432) is not published outside Docker.
 
+### Stop and start the service
+
+```bash
+docker compose stop      # turns the app off, keeps all data
+docker compose up -d     # turns it back on
+```
+
+> **The services restart on their own.** Both containers use `restart: always`, so they come back up whenever Docker starts (for example when the machine boots). To keep them off, run `docker compose stop` and quit Docker Desktop.
+
 ---
 
 ## Access from other devices
@@ -290,6 +299,15 @@ Si macOS no deja abrirlo porque el proyecto se bajó como zip, corre esto una ve
 
 FastAPI sirve tanto la API como el frontend (`frontend/index.html`), en el puerto 80.
 La base de datos (5432) no se publica fuera de Docker.
+
+### Detener y volver a encender el servicio
+
+```bash
+docker compose stop      # apaga la app, conserva todos los datos
+docker compose up -d     # la vuelve a encender
+```
+
+> **Los servicios se reinician solos.** Los dos contenedores usan `restart: always`, así que vuelven a arrancar cada vez que Docker se inicia (por ejemplo al prender el equipo). Para mantenerlos apagados, ejecutar `docker compose stop` y cerrar Docker Desktop.
 
 ---
 
